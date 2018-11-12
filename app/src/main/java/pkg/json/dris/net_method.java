@@ -1,46 +1,41 @@
 package pkg.json.dris;
 
-import android.app.Activity;
+import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.net.wifi.WifiInfo;
-import android.net.wifi.WifiManager;
 
-public class net_method extends Activity {
+public class net_method {
     ConnectivityManager cm;
     NetworkInfo nInfo;
+    Context context;
 
-    WifiManager wifiManager;
-    WifiInfo w_info;
-
-    String status = "null";
-
-    net_method() {
-        nInfo = cm.getActiveNetworkInfo();
-        wifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
-        w_info = wifiManager.getConnectionInfo();
+    public net_method(Context context) {
+        this.context = context;
+        //cm =  (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        //nInfo = cm.getActiveNetworkInfo();
     }
 
     public String net_status() {
 
+        cm =  (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        nInfo = cm.getActiveNetworkInfo();
+        String status = "null";
+
         if (nInfo == null) {
             status = "disconnect";
-        }
-
-        if (nInfo.isConnected()) {
-            /* NetWork接続可 */
+        }else if (nInfo.isConnected()) {
             if (nInfo.getTypeName().equals("WIFI")) {
-                if(w_info.getSSID() == "") status = "";
-                else status = "Wi-Fi";
-
+                status = "Wi-Fi";
             } else if (nInfo.getTypeName().equals("mobile")) {
-                status = "Mobile";
+                status = "connect";
+            }else {
+                status = "What?";
             }
+
         } else {
-            /* NetWork接続不可 */
             status = "disconnect";
         }
-
         return status;
     }
+
 }

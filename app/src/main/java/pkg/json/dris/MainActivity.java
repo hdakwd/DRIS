@@ -17,21 +17,21 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
-    ConnectivityManager cm;
-    ImageView iv;
-    private TextView mTextMessage;
+    net_method how_to;
+    //ConnectivityManager cm;
+    private TextView mText;
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
 
-
         @Override
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-            //画面下のメニュー画面で選択されるたびにネット接続確認
             switch (item.getItemId()) {
                 case R.id.navigation_home:
                     //Drive-Recorder
+                    mText.setText(how_to.net_status() );
                     return true;
                 case R.id.navigation_dashboard:
+                    mText.setText(how_to.net_status() );
                     //Mobile and other Wi-Fi
                     return true;
                 case R.id.navigation_notifications:
@@ -47,11 +47,14 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        mText = findViewById(R.id.text);
+        how_to = new net_method(getApplicationContext());
+
         BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
 
         /* ConnectivityManagerの取得 */
-        cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+        //cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
     }
 
     @Override
@@ -63,11 +66,16 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        //Wi-Fiまたはmobile接続の時に更新処理を始める
+        /*
+        Wi-FiまたはMobile接続時のときに更新処理を始める。
+        開いているメニューと実際の接続のプロトコル確認、
+        マッチしていればメニュー通りの更新をする。
+         */
         String str= "";
 
         // オプションメニュー
         if (item.getItemId() == R.id.item) {
+            //更新処理記述場所
             str="更新処理";
         }
 
