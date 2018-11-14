@@ -12,6 +12,7 @@ public class net_method {
     ConnectivityManager cm;
     NetworkInfo nInfo;
     Context context;
+    String[] net_state_kind = {"drireco", "internet", "disconnect", "Error"};
 
     public net_method(Context context) {
         this.context = context;
@@ -28,21 +29,26 @@ public class net_method {
         String status = "null";
 
         if (nInfo == null) {
-            status = "disconnect";
+            status = "Disconnect: Null";
         }else if (nInfo.isConnected()) {
             if (nInfo.getTypeName().equals("WIFI")) {
                 if(info.getSSID().equals("drireco")) {
-                    status = "drireco";
+                    // "drireco"のアクセスポイントに接続中
+                    status = net_state_kind[0];
                 }else {
-                    status = "Wi-Fi";
+                    // "Wi-Fi"でインターネット接続中
+                    status = net_state_kind[1];
                 }
             } else if (nInfo.getTypeName().equals("mobile")) {
-                status = "connect";
+                // "Mobile"でインターネット接続
+                status = net_state_kind[1];
             }else {
-                status = "What?";
+                //もしもの為の、謎のエラー。
+                status = net_state_kind[3] +": Wi-Fi in if";
             }
         } else {
-            status = "disconnect";
+            //nInfo.isConnected()で、falseを返された。
+            status = net_state_kind[2] +": False";
         }
         return status;
     }

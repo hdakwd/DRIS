@@ -1,5 +1,6 @@
 package pkg.json.dris;
 
+import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
@@ -13,29 +14,56 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.TableLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements ConnectionReceiver.Observer {
     net_method how_to;
-    //ConnectivityManager cm;
+    json_method json;
+    ConnectionReceiver mReceiver;
+    TextView text;
+    String connection;
     private TextView mText;
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
 
         @Override
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+            TableLayout layout = findViewById(R.id.main_view);
+            layout.removeAllViews();
+
             switch (item.getItemId()) {
-                case R.id.navigation_home:
+                    /* 1. 画面を開く
+                       2. 回線をチェックする
+                       3. 開いているタブによって操作不能にする。
+                     */
+                case R.id.drireco:
                     //Drive-Recorder
                     mText.setText(how_to.net_status() );
+                    getLayoutInflater().inflate(R.layout.recorder_view, layout);
+                    if(connection.equals("drireco")) {
+                        //ドライブレコーダに接続できているなら、タッチ操作で動画のダウンロード
+                    }else {
+                        //接続できていなきゃ、タッチ操作は封じる
+                        mText.setText("現在ドライブレコーダには接続できていません。" + how_to.net_status() + json.accident_info());
+                    }
                     return true;
-                case R.id.navigation_dashboard:
-                    mText.setText(how_to.net_status() );
+                case R.id.internet:
                     //Mobile and other Wi-Fi
+                    getLayoutInflater().inflate(R.layout.internet_view, layout);
+                    if(connection.equals("internet")) {
+                        //実際にネット接続できているなら、タッチ操作で詳細表示
+                        mText.setText(json.accident_info());
+                        //setContentView(R.layout.internet_view);
+                    }else {
+                        //実際にはネット接続できていないなら、タッチ操作は封じる
+                        mText.setText("現在インターネットには接続できていません。" + how_to.net_status() + json.accident_info());
+                    }
                     return true;
-                case R.id.navigation_notifications:
+                case R.id.setting:
                     //"Setting" menu
+                    mText.setText("Setting!!!");
+                    getLayoutInflater().inflate(R.layout.setting_view, layout);
                     return true;
             }
             return false;
@@ -49,12 +77,10 @@ public class MainActivity extends AppCompatActivity {
 
         mText = findViewById(R.id.text);
         how_to = new net_method(getApplicationContext());
+        json = new json_method();
 
         BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
-
-        /* ConnectivityManagerの取得 */
-        //cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
     }
 
     @Override
@@ -87,4 +113,40 @@ public class MainActivity extends AppCompatActivity {
 
         return super.onOptionsItemSelected(item);
     }
+
+    /* ConnectionReciver によって必要なるメソッド。*/
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Registers BroadcastReceiver to track network connection changes.
+        IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+        mReceiver = new ConnectionReceiver(this);
+        registerReceiver(mReceiver, filter);
+    }
+
+    @Override
+    public void driveConnect() {
+        //Connected with Wi-Fi access point "drireco"
+        /* ドライブレコーダに接続中の為、
+        インターネット接続時のタブを開いていれば、タブを封じる */
+        connection = "drireco";
+        mText.setText("Drive-Recorder!");
+    }
+
+    @Override
+    public void onConnect() {
+        //ネットワークに接続した時の処理
+        /* ドライブレコーダのタブを封じる */
+        connection = "internet";
+        mText.setText("Connect!");
+    }
+
+    @Override
+    public void onDisconnect() {
+        //ネットワークが切断された時の処理
+        /* 両方のタブを封じる */
+        connection = "disconnection";
+        mText.setText("disconnect");
+    }
+    /* 上記、ConnectionReciver により必要な３点 */
 }
