@@ -28,11 +28,12 @@ public class json_method {
     }
 
     public String accident_info() {
+        Log.d("HTTP", "Clled accident_info() method.");
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    url = new URL("https://drive-rcd.tk/test.php");
+                    url = new URL("https://drivercd.tk/test.php");
 
                     con = (HttpURLConnection) url.openConnection();
                     final String str = InputStreamToString(con.getInputStream());

@@ -10,60 +10,64 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.CardView;
+import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TableLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity implements ConnectionReceiver.Observer {
     net_method how_to;
-    json_method json;
-    ConnectionReceiver mReceiver;
-    TextView text;
-    String connection;
-    private TextView mText;
+    json_method json; // JSONの受信において使うメソッド
+    ConnectionReceiver mReceiver; //　ネットワーク接続を適宜知らせてくれる
+    LinearLayout tab_view; //タブの切り替えに使う
+    String connection; //接続先がドラレコか一別する
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
 
         @Override
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-            TableLayout layout = findViewById(R.id.main_view);
-            layout.removeAllViews();
+            /* LinearLayoutでタブの切り替えを行うため、
+               activity_mainのリセットが必要 */
+            tab_view.removeAllViews();
 
+            /* 各タブを作成するinflate() */
             switch (item.getItemId()) {
-                    /* 1. 画面を開く
-                       2. 回線をチェックする
-                       3. 開いているタブによって操作不能にする。
-                     */
                 case R.id.drireco:
                     //Drive-Recorder
-                    mText.setText(how_to.net_status() );
-                    getLayoutInflater().inflate(R.layout.recorder_view, layout);
+                    /* 各タブのリスト作成を作成するinflate() */
+                    setTab_view(R.layout.recorder_view);
+
                     if(connection.equals("drireco")) {
-                        //ドライブレコーダに接続できているなら、タッチ操作で動画のダウンロード
+                        //タッチ操作で動画のダウンロード等の操作を可能に
+                        Log.d("HTTP", "drireco of Wi-Fi access point.");
                     }else {
-                        //接続できていなきゃ、タッチ操作は封じる
-                        mText.setText("現在ドライブレコーダには接続できていません。" + how_to.net_status() + json.accident_info());
+                        //タッチ操作を封じる
+                        Log.d("HTTP", "connected or disconnected internet.");
                     }
                     return true;
                 case R.id.internet:
-                    //Mobile and other Wi-Fi
-                    getLayoutInflater().inflate(R.layout.internet_view, layout);
+                    //Mobile and Other Wi-Fi
+                    setTab_view(R.layout.internet_view);
                     if(connection.equals("internet")) {
-                        //実際にネット接続できているなら、タッチ操作で詳細表示
-                        mText.setText(json.accident_info());
-                        //setContentView(R.layout.internet_view);
+                        //タッチ操作で詳細表示もしくはIntentでブラウザ展開
+                        Log.d("HTTP", "connected internet.");
+                        Log.d("HTTP", ""+json.accident_info());
                     }else {
-                        //実際にはネット接続できていないなら、タッチ操作は封じる
-                        mText.setText("現在インターネットには接続できていません。" + how_to.net_status() + json.accident_info());
+                        //タッチ操作を封じる
+                        Log.d("HTTP", "disconnected internet");
                     }
                     return true;
                 case R.id.setting:
                     //"Setting" menu
-                    mText.setText("Setting!!!");
-                    getLayoutInflater().inflate(R.layout.setting_view, layout);
+                    setTab_view(R.layout.setting_view);
                     return true;
             }
             return false;
@@ -75,12 +79,44 @@ public class MainActivity extends AppCompatActivity implements ConnectionReceive
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mText = findViewById(R.id.text);
+        tab_view = findViewById(R.id.tab_content);
         how_to = new net_method(getApplicationContext());
         json = new json_method();
 
-        BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
+        BottomNavigationView navigation = findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
+        //BottomNavigationの後に呼び出さないと、起動時にタブの内容が表示されない。
+        setTab_view(R.layout.recorder_view);
+    }
+
+
+    public void setTab_view(int layout) {
+        //"ドラレコ"タブ、"インターネット"タブ、"設定"タブで、条件分岐または呼び出し元の変更が必要。
+        int cnt = 0;
+        String str = "";
+        if(layout == R.layout.recorder_view) { str = "ドラレコ"; cnt = 10; }
+        else if(layout == R.layout.internet_view) { str = "インターネット"; cnt = 20;}
+        else if(layout == R.layout.setting_view) { str = "設定"; }
+
+        LinearLayout cardLinear = this.findViewById(R.id.tab_content);
+        cardLinear.removeAllViews();
+
+        for(int i = 0; i< cnt; i++) {
+            LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
+            LinearLayout linearLayout = (LinearLayout) inflater.inflate(layout, null);
+            CardView cardView = linearLayout.findViewById(R.id.cardView);
+            TextView textBox = linearLayout.findViewById(R.id.textBox);
+            textBox.setText(str + i);
+            cardView.setTag(i);
+            cardView.setOnClickListener(new View.OnClickListener() {
+
+                @Override
+                public void onClick(View v) {
+                    Toast.makeText(MainActivity.this, String.valueOf(v.getTag()) + "番目のCardViewがクリックされました", Toast.LENGTH_SHORT).show();
+                }
+            });
+            cardLinear.addView(linearLayout,i);
+        }
     }
 
     @Override
@@ -92,19 +128,16 @@ public class MainActivity extends AppCompatActivity implements ConnectionReceive
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        /*
-        Wi-FiまたはMobile接続時のときに更新処理を始める。
-        開いているメニューと実際の接続のプロトコル確認、
-        マッチしていればメニュー通りの更新をする。
-         */
+        // オプションメニュー
+        /*　Wi-FiまたはMobile接続時のときに更新処理を始める。
+            開いているメニューと実際の接続のプロトコル確認、
+            マッチしていればメニュー通りの更新をする。 */
         String str= "";
 
-        // オプションメニュー
         if (item.getItemId() == R.id.item) {
             //更新処理記述場所
             str="更新処理";
         }
-
         new AlertDialog.Builder(MainActivity.this)
                 .setTitle("更新")
                 .setMessage(str +"を記述します")
@@ -113,6 +146,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionReceive
 
         return super.onOptionsItemSelected(item);
     }
+
 
     /* ConnectionReciver によって必要なるメソッド。*/
     @Override
@@ -130,7 +164,6 @@ public class MainActivity extends AppCompatActivity implements ConnectionReceive
         /* ドライブレコーダに接続中の為、
         インターネット接続時のタブを開いていれば、タブを封じる */
         connection = "drireco";
-        mText.setText("Drive-Recorder!");
     }
 
     @Override
@@ -138,7 +171,6 @@ public class MainActivity extends AppCompatActivity implements ConnectionReceive
         //ネットワークに接続した時の処理
         /* ドライブレコーダのタブを封じる */
         connection = "internet";
-        mText.setText("Connect!");
     }
 
     @Override
@@ -146,7 +178,6 @@ public class MainActivity extends AppCompatActivity implements ConnectionReceive
         //ネットワークが切断された時の処理
         /* 両方のタブを封じる */
         connection = "disconnection";
-        mText.setText("disconnect");
     }
     /* 上記、ConnectionReciver により必要な３点 */
 }
