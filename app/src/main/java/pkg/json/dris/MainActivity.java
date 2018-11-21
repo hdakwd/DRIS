@@ -136,11 +136,11 @@ public class MainActivity extends AppCompatActivity implements ConnectionReceive
 
         if (item.getItemId() == R.id.item) {
             //更新処理記述場所
-            str="更新処理";
+            str=json.accident_info();
         }
         new AlertDialog.Builder(MainActivity.this)
                 .setTitle("更新")
-                .setMessage(str +"を記述します")
+                .setMessage(str +"")
                 .setPositiveButton("OK", null)
                 .show();
 
