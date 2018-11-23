@@ -4,5 +4,9 @@
     <string name="title_dashboard">インターネット</string>
     <string name="title_notifications">設定</string>
 
+    <string name="tab_drireco">drireco</string>
+    <string name="tab_internet">internet</string>
+    <string name="tab_setting">setting</string>
+
     <string name="drireco_ssid">drireco</string>
 </resources>

@@ -1,9 +1,9 @@
 package pkg.json.dris;
 
 import android.app.Activity;
-import android.content.Context;
+import android.app.ProgressDialog;
+import android.os.AsyncTask;
 import android.util.Log;
-import android.view.View;
 import android.widget.TextView;
 
 import org.json.JSONException;
@@ -16,45 +16,48 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-public class json_method {
-    URL url;
-    HttpURLConnection con;
-    TextView textView;
-    Context context;
-    String html;
+public class json_method extends AsyncTask<String, Void, String> {
+    private Activity m_Activity;
+    private ProgressDialog m_ProgressDialog;
+    //TextView txt;
 
-    public json_method() {
-        //textView = findViewById(R.id.text);
+
+    json_method(Activity activity) {
+        // 呼び出し元のアクティビティ
+        Log.d("HTTP","+++ TEST +++  "+activity);
+        m_Activity = activity;
     }
 
-    public String accident_info() {
-        Log.d("HTTP", "Clled accident_info() method.");
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    url = new URL("https://drivercd.tk/test.php");
-
-                    con = (HttpURLConnection) url.openConnection();
-                    final String str = InputStreamToString(con.getInputStream());
-                    html = str;
-                    Log.d("HTTP", str);
-/*
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            textView.setText(Json_Ana(String.valueOf(str)));
-                        }
-                    });
-                    */
-                } catch (Exception ex) {
-                    System.out.println(ex);
-                }
-            }
-        }).start();
-        return html;
+    /* 実行前の事前処理 */
+    @Override
+    protected void onPreExecute() {
+        // プログレスダイアログの生成
+        this.m_ProgressDialog = new ProgressDialog(this.m_Activity);
+        // プログレスダイアログの設定
+        this.m_ProgressDialog.setMessage("取得中");  // メッセージをセット
+        // プログレスダイアログの表示
+        this.m_ProgressDialog.show();
     }
 
+    @Override
+    protected String doInBackground(String... ImagePath) {
+        //ここにバックグラウンドで行う処理を書く
+        String rtn="";
+        URL url;
+        HttpURLConnection con;
+
+        try {
+            url = new URL("https://drivercd.tk/test.php");
+
+            con = (HttpURLConnection) url.openConnection();
+            rtn = InputStreamToString(con.getInputStream());
+            //rtn = str;
+            Log.d("HTTP", rtn);
+        } catch (Exception ex) {
+            System.out.print(ex);
+        }
+        return rtn;
+    }
     //文字の組み立てメソッド
     private String InputStreamToString(InputStream is) throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(is));
@@ -79,5 +82,33 @@ public class json_method {
         }
 
         return display;
+    }
+
+    /* ここにdoInBackground終了後に行う処理を書く
+       UI操作の記述ができる。 */
+    @Override
+    protected void onPostExecute(String result) {
+        // txt = m_Activity.findViewById(R.id.result);
+        // txt.setText(result);
+
+        // プログレスダイアログを閉じる
+        if (this.m_ProgressDialog != null && this.m_ProgressDialog.isShowing()) {
+            this.m_ProgressDialog.dismiss();
+        }
+    }
+
+    /* キャンセル時の処理 */
+    @Override
+    protected void onCancelled() {
+        super.onCancelled();
+        //Log.v("AsyncTaskProgressDialogSimpleThread", "onCancelled()");
+        if (this.m_ProgressDialog != null) {
+            //Log.v("this.m_ProgressDialog.isShowing()", String.valueOf(this.m_ProgressDialog.isShowing()));
+            // プログレスダイアログ表示中の場合
+            if (this.m_ProgressDialog.isShowing()) {
+                // プログレスダイアログを閉じる
+                this.m_ProgressDialog.dismiss();
+            }
+        }
     }
 }

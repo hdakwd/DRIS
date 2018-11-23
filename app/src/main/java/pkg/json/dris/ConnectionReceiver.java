@@ -10,6 +10,7 @@ import android.net.wifi.WifiManager;
 
 import static android.content.Context.WIFI_SERVICE;
 
+
 public class ConnectionReceiver extends BroadcastReceiver {
     private Observer mObserver;
 

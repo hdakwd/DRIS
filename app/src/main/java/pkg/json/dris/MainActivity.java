@@ -2,13 +2,9 @@ package pkg.json.dris;
 
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import android.net.wifi.WifiInfo;
-import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.CardView;
 import android.util.Log;
@@ -16,10 +12,7 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.TableLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -28,7 +21,8 @@ public class MainActivity extends AppCompatActivity implements ConnectionReceive
     json_method json; // JSONの受信において使うメソッド
     ConnectionReceiver mReceiver; //　ネットワーク接続を適宜知らせてくれる
     LinearLayout tab_view; //タブの切り替えに使う
-    String connection; //接続先がドラレコか一別する
+    String connection; // 接続先がドラレコか一別する
+    String tab_name; // タブの識別
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
 
@@ -43,8 +37,8 @@ public class MainActivity extends AppCompatActivity implements ConnectionReceive
                 case R.id.drireco:
                     //Drive-Recorder
                     /* 各タブのリスト作成を作成するinflate() */
+                    tab_name="@string/tab_drireco";
                     setTab_view(R.layout.recorder_view);
-
                     if(connection.equals("drireco")) {
                         //タッチ操作で動画のダウンロード等の操作を可能に
                         Log.d("HTTP", "drireco of Wi-Fi access point.");
@@ -55,11 +49,11 @@ public class MainActivity extends AppCompatActivity implements ConnectionReceive
                     return true;
                 case R.id.internet:
                     //Mobile and Other Wi-Fi
+                    tab_name="@string/tab_internet";
                     setTab_view(R.layout.internet_view);
                     if(connection.equals("internet")) {
                         //タッチ操作で詳細表示もしくはIntentでブラウザ展開
                         Log.d("HTTP", "connected internet.");
-                        Log.d("HTTP", ""+json.accident_info());
                     }else {
                         //タッチ操作を封じる
                         Log.d("HTTP", "disconnected internet");
@@ -67,6 +61,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionReceive
                     return true;
                 case R.id.setting:
                     //"Setting" menu
+                    tab_name="@string/setting";
                     setTab_view(R.layout.setting_view);
                     return true;
             }
@@ -81,7 +76,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionReceive
 
         tab_view = findViewById(R.id.tab_content);
         how_to = new net_method(getApplicationContext());
-        json = new json_method();
+        json = new json_method(MainActivity.this);
 
         BottomNavigationView navigation = findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
@@ -132,20 +127,23 @@ public class MainActivity extends AppCompatActivity implements ConnectionReceive
         /*　Wi-FiまたはMobile接続時のときに更新処理を始める。
             開いているメニューと実際の接続のプロトコル確認、
             マッチしていればメニュー通りの更新をする。 */
-        String str= "";
 
         if (item.getItemId() == R.id.item) {
             //更新処理記述場所
-            str=json.accident_info();
+            if(tab_name == "@string/tab_drireco") {
+                // ドライブレコーダ映像の更新
+                // 更新した分Viewに表示させる
+            }else if(tab_name == "@string/tab_internet") {
+                new json_method(MainActivity.this).execute("https://drivercd.tk/test.php");
+                // 更新した分Viewに表示させる
+            }else if(tab_name == "@string/tab_setting") {
+                // 表示すらするべきでないかも
+            }else {}
         }
-        new AlertDialog.Builder(MainActivity.this)
-                .setTitle("更新")
-                .setMessage(str +"")
-                .setPositiveButton("OK", null)
-                .show();
 
         return super.onOptionsItemSelected(item);
     }
+
 
 
     /* ConnectionReciver によって必要なるメソッド。*/
